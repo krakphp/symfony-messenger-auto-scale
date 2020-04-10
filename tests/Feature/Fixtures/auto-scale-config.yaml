@@ -1,0 +1,14 @@
+messenger_auto_scale:
+  console_path: '%kernel.project_dir%/tests/Feature/Fixtures/console'
+  pools:
+    sales:
+      min_procs: 0
+      max_procs: 5
+      receivers: "sales*"
+      heartbeat_interval: 5
+    default:
+      min_procs: 0
+      max_procs: 5
+      backed_up_alert_threshold: 100
+      receivers: "*"
+      heartbeat_interval: 10

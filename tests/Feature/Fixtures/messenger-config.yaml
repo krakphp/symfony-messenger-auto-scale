@@ -1,0 +1,13 @@
+framework:
+  serializer:
+    enabled: true
+  cache:
+    default_redis_provider: 'redis://redis:6379'
+  messenger:
+    transports:
+      catalog: 'redis://redis:6379?queue=catalog'
+      sales: 'redis://redis:6379?queue=sales'
+      sales_order: 'redis://redis:6379?queue=sales_order'
+    routing:
+      'Krak\SymfonyMessengerAutoScale\Tests\Feature\Fixtures\Message\CatalogMessage': catalog
+      'Krak\SymfonyMessengerAutoScale\Tests\Feature\Fixtures\Message\SalesMessage': [sales, sales_order]
