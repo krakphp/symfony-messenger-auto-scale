@@ -1,0 +1,33 @@
+#!/usr/bin/env php
+<?php
+
+use Krak\SymfonyMessengerAutoScale\Tests\Feature\Fixtures\FixtureKernel;
+use Symfony\Bundle\FrameworkBundle\Console\Application;
+use Symfony\Component\Console\Input\ArgvInput;
+use Symfony\Component\Debug\Debug;
+
+ini_set('display_errors', 1);
+set_time_limit(0);
+
+require_once __DIR__ . '/../../../vendor/autoload.php';
+
+if (!class_exists(Application::class)) {
+    throw new \RuntimeException('You need to add "symfony/framework-bundle" as a Composer dependency.');
+}
+
+
+$input = new ArgvInput();
+$env = $input->getParameterOption(['--env', '-e'], isset($_SERVER['APP_ENV']) ? $_SERVER['APP_ENV'] : 'dev');
+$debug = (isset($_SERVER['APP_DEBUG']) ? $_SERVER['APP_DEBUG'] : ('prod' !== $env)) && !$input->hasParameterOption(['--no-debug', '']);
+
+if ($debug) {
+    umask(0000);
+
+    if (class_exists(Debug::class)) {
+        Debug::enable();
+    }
+}
+
+$kernel = new FixtureKernel($env, $debug);
+$application = new Application($kernel);
+$application->run($input);

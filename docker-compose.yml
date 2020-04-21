@@ -1,0 +1,14 @@
+version: '3'
+
+services:
+  php:
+    build: .
+    command: "tail -f /dev/null"
+    working_dir: /var/www/html
+    volumes:
+      - ./:/var/www/html
+  redis:
+    image: redis
+    environment: { TERM: xterm }
+    ports: ["6379:6379"]
+    restart: unless-stopped

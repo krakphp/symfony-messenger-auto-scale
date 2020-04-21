@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<container xmlns="http://symfony.com/schema/dic/services" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
+    <services>
+        <defaults public="false" autowire="true" autoconfigure="true">
+            <bind key="$receiversById" type="service" id="messenger.receiver_locator"/>
+            <bind key="$supervisorPoolConfigs" type="service" id="krak.messenger_auto_scale.supervisor_pool_configs"/>
+        </defaults>
+        <service id="krak.messenger_auto_scale.supervisor_pool_configs" class="array">
+            <factory class="Krak\SymfonyMessengerAutoScale\DependencyInjection\BuildSupervisorPoolConfigCompilerPass" method="createSupervisorPoolConfigsFromArray" />
+        </service>
+        <service id="krak.messenger_auto_scale.auto_scale.default" class="Krak\SymfonyMessengerAutoScale\AutoScale">
+            <factory class="Krak\SymfonyMessengerAutoScale\Supervisor" method="defaultAutoScale" />
+        </service>
+        <service id="Krak\SymfonyMessengerAutoScale\AutoScale" alias="krak.messenger_auto_scale.auto_scale.default"/>
+
+        <!-- Process Manager Factory -->
+        <service id="Krak\SymfonyMessengerAutoScale\ProcessManager\SymfonyMessengerProcessManagerFactory"/>
+        <service id="Krak\SymfonyMessengerAutoScale\ProcessManagerFactory" alias="Krak\SymfonyMessengerAutoScale\ProcessManager\SymfonyMessengerProcessManagerFactory"/>
+
+        <!-- Pool Control Factory -->
+        <service id="Krak\SymfonyMessengerAutoScale\PoolControl\InMemoryPoolControlFactory"/>
+        <service id="Krak\SymfonyMessengerAutoScale\PoolControl\PsrSimpleCachePoolControlFactory"/>
+        <service id="Krak\SymfonyMessengerAutoScale\PoolControlFactory" alias="Krak\SymfonyMessengerAutoScale\PoolControl\PsrSimpleCachePoolControlFactory" />
+
+        <!-- Raise Alerts -->
+        <service id="Krak\SymfonyMessengerAutoScale\RaiseAlerts\PoolBackedUpRaiseAlerts"/>
+        <service id="Krak\SymfonyMessengerAutoScale\RaiseAlerts\ChainRaiseAlerts" autoconfigure="false">
+            <argument type="tagged_iterator" tag="messenger_auto_scale.raise_alerts"/>
+        </service>
+        <service id="Krak\SymfonyMessengerAutoScale\RaiseAlerts" alias="Krak\SymfonyMessengerAutoScale\RaiseAlerts\ChainRaiseAlerts" />
+
+        <service id="Krak\SymfonyMessengerAutoScale\Supervisor"/>
+
+        <service id="Krak\SymfonyMessengerAutoScale\Command\ConsumeCommand"/>
+        <service id="Krak\SymfonyMessengerAutoScale\Command\AlertCommand"/>
+        <service id="Krak\SymfonyMessengerAutoScale\Command\Pool\PauseCommand"/>
+        <service id="Krak\SymfonyMessengerAutoScale\Command\Pool\RestartCommand"/>
+        <service id="Krak\SymfonyMessengerAutoScale\Command\Pool\ResumeCommand"/>
+        <service id="Krak\SymfonyMessengerAutoScale\Command\Pool\StatusCommand"/>
+    </services>
+</container>
