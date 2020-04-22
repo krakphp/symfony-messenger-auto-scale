@@ -2,8 +2,6 @@
 
 namespace Krak\SymfonyMessengerAutoScale;
 
-use Psr\Log\LoggerInterface;
-
 interface ProcessManager
 {
     /** @return mixed a process ref */

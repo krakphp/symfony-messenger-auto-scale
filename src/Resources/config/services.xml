@@ -29,7 +29,9 @@
         </service>
         <service id="Krak\SymfonyMessengerAutoScale\RaiseAlerts" alias="Krak\SymfonyMessengerAutoScale\RaiseAlerts\ChainRaiseAlerts" />
 
-        <service id="Krak\SymfonyMessengerAutoScale\Supervisor"/>
+        <service id="Krak\SymfonyMessengerAutoScale\Supervisor">
+            <tag name="monolog.logger" channel="messenger_auto_scale"/>
+        </service>
 
         <service id="Krak\SymfonyMessengerAutoScale\Command\ConsumeCommand"/>
         <service id="Krak\SymfonyMessengerAutoScale\Command\AlertCommand"/>
