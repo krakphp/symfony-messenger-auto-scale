@@ -1,0 +1,15 @@
+name: PHP Tests
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Start Docker Containers
+        run: docker-compose up -d
+      - name: Install dependencies
+        run: docker-compose exec -T php composer install
+      - name: Run Tests
+        run: docker-compose exec -T php composer test
