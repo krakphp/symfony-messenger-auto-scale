@@ -1,6 +1,6 @@
 # Symfony Messenger Auto Scaling
 
-![PHP Tests](https://github.com/krakphp/symfony-messenger-auto-scale/workflows/PHP%20Tests/badge.svg)
+![PHP Tests](https://github.com/krakphp/symfony-messenger-auto-scale/workflows/PHP%20Tests/badge.svg?branch=master&event=push)
 
 The Symfony Messenger Auto Scaling package provides the ability to dynamically scale the number of workers for a given set of receivers to respond to dynamic workloads.
 
