@@ -2,6 +2,7 @@
 
 namespace Krak\SymfonyMessengerAutoScale;
 
+use Symfony\Component\Config\Definition\Builder\BooleanNodeDefinition;
 use Symfony\Component\Config\Definition\Builder\ScalarNodeDefinition;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -11,13 +12,13 @@ use Symfony\Component\DependencyInjection\Loader\XmlFileLoader;
 use Symfony\Component\HttpKernel\Bundle\Bundle;
 use Symfony\Component\Config\FileLocator;
 use function Krak\Schema\{
+    bool,
     dict,
     struct,
     int,
     listOf,
     string,
-    ProcessSchema\SymfonyConfig\configTree
-};
+    ProcessSchema\SymfonyConfig\configTree};
 
 class MessengerAutoScaleBundle extends Bundle
 {
@@ -52,6 +53,9 @@ class MessengerAutoScaleBundle extends Bundle
                         return configTree('messenger_auto_scale', struct([
                             'console_path' => string(['configure' => function(ScalarNodeDefinition $def) {
                                 $def->defaultValue('%kernel.project_dir%/bin/console');
+                            }]),
+                            'must_match_all_receivers' => bool(['configure' => function(BooleanNodeDefinition $def) {
+                                $def->defaultTrue();
                             }]),
                             'pools' => dict(struct([
                                 'min_procs' => int(),

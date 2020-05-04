@@ -50,6 +50,17 @@ Each pool config must have a `receivers` property which is a simple Glob that wi
 
 It's important to note, that a receiver can ONLY be apart of one pool. So if two pools have receiver patterns that match the same receiver, then the first defined pool would own that receiver.
 
+### Disabling Must Match All Receivers
+
+By default, the bundle will throw an exception if any receivers are not matched by the pool config. This is to help prevent any unexpected bugs where you the receiver name is for some reason not matched by a pool when you expected it to.
+
+To disable this check, update the `must_match_all_receivers` config option to false:
+
+```yaml
+messenger_auto_scale:
+  must_match_all_receivers: false
+```
+
 ## Configuring Heartbeats
 
 By default, each worker pool will log a heartbeat event every 60 seconds. If you want to change the frequency of that, you use the pool `heartbeat_interval` to define the number of seconds between subsequent heartbeats.
