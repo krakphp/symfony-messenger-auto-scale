@@ -40,6 +40,10 @@ final class BuildSupervisorPoolConfigCompilerPass implements CompilerPassInterfa
             [$matchedReceiverNames, $receiverNames] = $this->matchReceiverNameFromRawPool($rawPool, $receiverNames);
             yield ['name' => $poolName, 'poolConfig' => $rawPool, 'receiverIds' => $matchedReceiverNames];
         }
+
+        if (count($receiverNames) && $rawPoolConfig['must_match_all_receivers']) {
+            throw new \LogicException('Some receivers were not matched by the pool config: ' . implode(', ', $receiverNames));
+        }
     }
 
     /** return the matched receiver names and unmatched recevier names as a two tuple. */

@@ -1,0 +1,5 @@
+messenger_auto_scale:
+  must_match_all_receivers: false
+  pools:
+    sales:
+      receivers: "sales*"
