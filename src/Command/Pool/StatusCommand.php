@@ -26,13 +26,15 @@ final class StatusCommand extends PoolCommand
 
         if (!$shouldPoll) {
             $this->printPools($output, $poolNames);
-            return;
+            return 0;
         }
 
         while (true) {
             $this->printPools($output, $poolNames);
             sleep($pollInterval);
         }
+
+        return 0;
     }
 
     private function printPools(OutputInterface $output, array $poolNames) {

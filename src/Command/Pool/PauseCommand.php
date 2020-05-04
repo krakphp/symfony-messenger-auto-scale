@@ -20,5 +20,7 @@ final class PauseCommand extends PoolCommand
             $output->writeln("<info>Pausing Pool: {$poolName}</info>");
             $control->pause();
         }
+
+        return 0;
     }
 }

@@ -20,5 +20,7 @@ final class RestartCommand extends PoolCommand
             $output->writeln("<info>Restarting Pool: {$poolName}</info>");
             $control->restart();
         }
+
+        return 0;
     }
 }

@@ -20,5 +20,7 @@ final class ResumeCommand extends PoolCommand
             $output->writeln("<info>Resuming Pool: {$poolName}</info>");
             $control->resume();
         }
+
+        return 0;
     }
 }

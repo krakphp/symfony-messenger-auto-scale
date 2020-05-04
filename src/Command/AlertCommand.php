@@ -32,5 +32,7 @@ final class AlertCommand extends Command
                 $this->eventDispatcher->dispatch($event);
             }
         }
+
+        return 0;
     }
 }
