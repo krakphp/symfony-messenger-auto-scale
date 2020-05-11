@@ -37,7 +37,8 @@ class MessengerAutoScaleBundle extends Bundle
 
             /** @param mixed[] $configs */
             public function load(array $configs, ContainerBuilder $container): void {
-                $processedConfig = $this->createProcessedConfiguration($configs);
+                $configuration = $this->getConfiguration($configs, $container);
+                $processedConfig = $this->processConfiguration($configuration, $configs);
                 $this->loadServices($container);
 
                 // processed pool config to be accessible as a parameter.
@@ -46,8 +47,8 @@ class MessengerAutoScaleBundle extends Bundle
                     ->addArgument($processedConfig['console_path']);
             }
 
-            private function createProcessedConfiguration(array $configs): array {
-                return $this->processConfiguration(new class() implements ConfigurationInterface {
+            public function getConfiguration(array $config, ContainerBuilder $container) {
+                return new class() implements ConfigurationInterface {
                     public function getConfigTreeBuilder() {
                         return configTree('messenger_auto_scale', struct([
                             'console_path' => string(['configure' => function(ScalarNodeDefinition $def) {
@@ -66,7 +67,7 @@ class MessengerAutoScaleBundle extends Bundle
                             ], ['allowExtraKeys' => true]))
                         ]));
                     }
-                }, $configs);
+                };
             }
 
             private function loadServices(ContainerBuilder $container): void {
