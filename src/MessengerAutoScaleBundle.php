@@ -22,7 +22,6 @@ use function Krak\Schema\{
 
 class MessengerAutoScaleBundle extends Bundle
 {
-    const TAG_SUPERVISOR_POOL_CONFIGS = 'messenger_auto_scale.supervisor_pool_configs';
     const TAG_RAISE_ALERTS = 'messenger_auto_scale.raise_alerts';
 
     public function build(ContainerBuilder $container) {

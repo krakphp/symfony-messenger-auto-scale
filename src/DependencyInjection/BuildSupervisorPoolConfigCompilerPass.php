@@ -3,31 +3,32 @@
 namespace Krak\SymfonyMessengerAutoScale\DependencyInjection;
 
 use Krak\SymfonyMessengerAutoScale\Internal\Glob;
-use Krak\SymfonyMessengerAutoScale\MessengerAutoScaleBundle;
 use Krak\SymfonyMessengerAutoScale\PoolConfig;
 use Krak\SymfonyMessengerAutoScale\SupervisorPoolConfig;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
-use Symfony\Component\DependencyInjection\Reference;
 
 final class BuildSupervisorPoolConfigCompilerPass implements CompilerPassInterface
 {
     public function process(ContainerBuilder $container) {
         $receiverNames = $this->findReceiverNames($container);
 
-        $this->registerSupervisorPoolConfigsToTaggedServices($container, $receiverNames);
+        $this->registerMappedPoolConfigData($container, $receiverNames);
         $container->setParameter('messenger_auto_scale.receiver_names', $receiverNames);
     }
 
     /**
-     * Any service that uses the SUPERVISOR_POOL_CONFIGS tag will be automatically injected with a configured array of
-     * SupervisorPoolConfig objects.
-     * We need to use a service factory to support this because you can't have objects as parameters in SF DI.
+     * Certain help array structures need to built from the original pool config data. To make these structures shareable
+     * we register them as services factories which are responsible for transforming the array of supervisor pool config
+     * into the necessary structure.
+     * @see BuildSupervisorPoolConfigCompilerPass::createSupervisorPoolConfigsFromArray()
+     * @see BuildSupervisorPoolConfigCompilerPass::createReceiverToPoolMappingFromArray()
      */
-    private function registerSupervisorPoolConfigsToTaggedServices(ContainerBuilder $container, array $receiverNames): void {
+    private function registerMappedPoolConfigData(ContainerBuilder $container, array $receiverNames): void {
         $rawPoolConfig = $container->getParameter('krak.messenger_auto_scale.config.pools');
-        $supervisorPoolConfigs = $this->buildSupervisorPoolConfigs($rawPoolConfig, $receiverNames);
-        $container->findDefinition('krak.messenger_auto_scale.supervisor_pool_configs')->addArgument(iterator_to_array($supervisorPoolConfigs));
+        $supervisorPoolConfigs = iterator_to_array($this->buildSupervisorPoolConfigs($rawPoolConfig, $receiverNames));
+        $container->findDefinition('krak.messenger_auto_scale.supervisor_pool_configs')->addArgument($supervisorPoolConfigs);
+        $container->findDefinition('krak.messenger_auto_scale.receiver_to_pool_mapping')->addArgument($supervisorPoolConfigs);
     }
 
     /** @return SupervisorPoolConfig[] */
@@ -79,5 +80,15 @@ final class BuildSupervisorPoolConfigCompilerPass implements CompilerPassInterfa
         return \array_map(function(array $pool) {
             return new SupervisorPoolConfig($pool['name'], PoolConfig::createFromOptionsArray($pool['poolConfig']), $pool['receiverIds']);
         }, $poolConfigs);
+    }
+
+    public static function createReceiverToPoolMappingFromArray(array $poolConfigs): array {
+        $mapping = [];
+        foreach ($poolConfigs as $pool) {
+            foreach ($pool['receiverIds'] as $receiverId) {
+                $mapping[$receiverId] = $pool['name'];
+            }
+        }
+        return $mapping;
     }
 }

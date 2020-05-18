@@ -39,6 +39,17 @@ final class BundleTest extends BaseBundleTestCase
     }
 
     /** @test */
+    public function receiver_to_pool_mapping_is_built_from_auto_scale_config() {
+        $this->given_the_kernel_is_booted_with_messenger_and_auto_scale_config();
+        $this->when_the_requires_supervisor_pool_configs_is_created();
+        $this->then_the_receiver_to_pools_mapping_matches([
+            'catalog' => 'default',
+            'sales' => 'sales',
+            'sales_order' => 'sales',
+        ]);
+    }
+
+    /** @test */
     public function consuming_messages_with_a_running_supervisor() {
         $this->given_the_message_info_file_is_reset();
         $this->given_the_kernel_is_booted_with_messenger_and_auto_scale_config();
@@ -91,6 +102,10 @@ final class BundleTest extends BaseBundleTestCase
         $this->assertEquals(['sales', 'sales_order'], $res->poolConfigs[0]->receiverIds());
         $this->assertEquals('default', $res->poolConfigs[1]->name());
         $this->assertEquals(['catalog'], $res->poolConfigs[1]->receiverIds());
+    }
+
+    private function then_the_receiver_to_pools_mapping_matches(array $mapping) {
+        $this->assertEquals($mapping, $this->requiresPoolConfigs->receiverToPoolMapping);
     }
 
     private function then_the_message_info_file_matches_the_messages_sent() {

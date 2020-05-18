@@ -140,6 +140,18 @@ If there are over 100 messages in the sales pool, then the PoolBackedUpAlert wil
 
 To create an alert, you need to subscribe to the RaiseAlerts interface, then register that service, and if you enable auto configuration, it should automatically get tagged with `messenger_auto_scale.raise_alerts`.
 
+## Accessing Supervisor Pool Config from Symfony App
+
+When installing this as a bundle in a symfony app, it can be helpful to provide access to some internal config structures. The library exposes services which can be injected/accessed to provide access to the internal config.
+
+### Supervisor Pool Config Array
+
+`krak.messenger_auto_scale.supervisor_pool_configs` stores `list<SupervisorPoolConfig>` based off of the auto scale config.
+
+### Receiver To Pool Names Array
+
+`krak.messenger_auto_scale.receiver_to_pool_mapping` stores `array<string, string>` which maps the messenger reciever ids to the auto scale pool names.
+
 ## Testing
 
 You can run the test suite with: `composer test`
