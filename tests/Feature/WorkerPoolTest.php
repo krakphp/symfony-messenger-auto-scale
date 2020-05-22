@@ -104,6 +104,21 @@ final class WorkerPoolTest extends TestCase
         $this->then_the_total_running_procs_is(5);
     }
 
+    /** @test */
+    public function performs_heart_beats() {
+        $this->given_there_is_a_running_worker_pool_with_num_procs(5);
+        $this->given_the_unprocessed_message_count_is(5);
+        $this->given_the_pool_control_has_been_reset();
+        $this->when_the_worker_pool_is_managed_n_times([10, 40, 10]);
+        $this->then_the_total_running_procs_is(5);
+        $this->then_the_pool_control_status_is(PoolStatus::running());
+        $this->then_the_last_heartbeat_log_should_match([
+            'num_procs' => 5,
+            'pool' => 'test',
+            'sizeOfQueues' => 5,
+        ]);
+    }
+
     private function given_the_unprocessed_message_count_is(int $messageCount) {
         $this->getMessageCount->messageCount = $messageCount;
     }
@@ -145,8 +160,11 @@ final class WorkerPoolTest extends TestCase
         $this->procManager->stopProcess($procId);
     }
 
-    private function given_the_worker_pool_has_been_managed_n_times(array $args): void {
-        $this->when_the_worker_pool_is_managed_n_times($args);
+    /** A pool control could potentially be reset for ephemerally backed pool control stores */
+    private function given_the_pool_control_has_been_reset() {
+        $this->poolControl->scaleWorkers(0);
+        $this->poolControl->resume();
+        $this->poolControl->updateStatus(PoolStatus::stopped());
     }
 
     private function when_the_worker_pool_is_stopped() {
@@ -157,8 +175,8 @@ final class WorkerPoolTest extends TestCase
         $this->workerPool->manage($timeSinceLastCallSeconds);
     }
 
-    private function when_the_worker_pool_is_managed_n_times(array $args): void {
-        foreach ($args as $timeSinceLastCallSeconds) {
+    private function when_the_worker_pool_is_managed_n_times(array $listOtTimeSinceLastSeconds): void {
+        foreach ($listOtTimeSinceLastSeconds as $timeSinceLastCallSeconds) {
             $this->workerPool->manage($timeSinceLastCallSeconds);
         }
     }
@@ -173,5 +191,13 @@ final class WorkerPoolTest extends TestCase
 
     private function then_the_pool_control_status_is(PoolStatus $status): void {
         $this->assertEquals($status, $this->poolControl->getStatus());
+    }
+
+    private function then_the_last_heartbeat_log_should_match(array $expectedContext) {
+        $heartbeatLogs = array_filter($this->testLogger->records, function(array $record) {
+            return $record['message'] === 'Running';
+        });
+        $record = end($heartbeatLogs);
+        $this->assertEquals($expectedContext, $record['context']['messenger_auto_scale_event_pool_running_context']);
     }
 }

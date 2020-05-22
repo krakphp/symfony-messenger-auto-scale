@@ -88,6 +88,7 @@ final class WorkerPool
             return;
         }
 
+        $this->poolControl->scaleWorkers($this->numProcs());
         $this->poolControl->updateStatus(PoolStatus::running(), $sizeOfQueues);
         $this->logEvent('Running', 'running', ['sizeOfQueues' => $sizeOfQueues]);
     }
