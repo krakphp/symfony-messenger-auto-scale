@@ -5,14 +5,15 @@ namespace Krak\SymfonyMessengerAutoScale\DependencyInjection;
 use Krak\SymfonyMessengerAutoScale\Internal\Glob;
 use Krak\SymfonyMessengerAutoScale\PoolConfig;
 use Krak\SymfonyMessengerAutoScale\SupervisorPoolConfig;
+use Symfony\Bundle\FrameworkBundle;
+use Symfony\Component\Config\Definition\Processor;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 
 final class BuildSupervisorPoolConfigCompilerPass implements CompilerPassInterface
 {
     public function process(ContainerBuilder $container) {
-        $receiverNames = $this->findReceiverNames($container);
-
+        $receiverNames = $this->findReceiverNamesSortedByPriorityAndPosition($container);
         $this->registerMappedPoolConfigData($container, $receiverNames);
         $container->setParameter('messenger_auto_scale.receiver_names', $receiverNames);
     }
@@ -63,17 +64,27 @@ final class BuildSupervisorPoolConfigCompilerPass implements CompilerPassInterfa
         return [$matched, $unmatched];
     }
 
-    private function findReceiverNames(ContainerBuilder $container): array {
-        $receiverMapping = [];
-        foreach ($container->findTaggedServiceIds('messenger.receiver') as $id => $tags) {
-            foreach ($tags as $tag) {
-                if (isset($tag['alias'])) {
-                    $receiverMapping[$tag['alias']] = null;
-                }
-            }
+    private function findReceiverNamesSortedByPriorityAndPosition(ContainerBuilder $container): array {
+        $frameworkConfig = (new Processor())->processConfiguration(
+            new FrameworkBundle\DependencyInjection\Configuration($container->getParameter('kernel.debug')),
+            $container->getExtensionConfig('framework')
+        );
+        $transports = $frameworkConfig['messenger']['transports'] ?? [];
+        $receiverNamesToSort = [];
+        $position = 0;
+        foreach ($transports as $transportName => $config) {
+            $receiverNamesToSort[] = [
+                'name' => $transportName,
+                'priority' => $config['options']['priority'] ?? 0,
+                'position' => $position
+            ];
+            $position += 1;
         }
-
-        return \array_unique(\array_keys($receiverMapping));
+        usort($receiverNamesToSort, function(array $a, array $b) {
+            // sort by priority desc, position asc
+            return ($b['priority'] <=> $a['priority']) ?: ($a['position'] <=> $b['position']);
+        });
+        return array_column($receiverNamesToSort, 'name');
     }
 
     public static function createSupervisorPoolConfigsFromArray(array $poolConfigs): array {

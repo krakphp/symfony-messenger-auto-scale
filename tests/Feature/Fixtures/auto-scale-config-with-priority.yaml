@@ -1,0 +1,8 @@
+messenger_auto_scale:
+  console_path: '%kernel.project_dir%/tests/Feature/Fixtures/console'
+  pools:
+    catalog:
+      min_procs: 0
+      max_procs: 5
+      receivers: "catalog*"
+      heartbeat_interval: 5

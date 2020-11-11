@@ -1,0 +1,19 @@
+framework:
+  serializer:
+    enabled: true
+  cache:
+    default_redis_provider: 'redis://redis:6379'
+  messenger:
+    transports:
+      catalog_low:
+        dsn: 'redis://redis:6379?queue=catalog'
+        options: { priority: -1 }
+      catalog: 'redis://redis:6379?queue=catalog'
+      catalog_highest:
+        dsn: 'redis://redis:6379?queue=catalog'
+        options: { priority: 2 }
+      catalog_high:
+        dsn: 'redis://redis:6379?queue=catalog'
+        options: { priority: 1 }
+    routing:
+      'Krak\SymfonyMessengerAutoScale\Tests\Feature\Fixtures\Message\CatalogMessage': [catalog_low, catalog, catalog_high, catalog_highest]

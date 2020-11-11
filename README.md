@@ -50,6 +50,56 @@ Each pool config must have a `receivers` property which is a simple Glob that wi
 
 It's important to note, that a receiver can ONLY be apart of one pool. So if two pools have receiver patterns that match the same receiver, then the first defined pool would own that receiver.
 
+### Receiver Priority
+
+By default, if a pool matches more than one receiver, the order in which the receivers are defined in the framework messenger configuration will be the order in which they are consumed.
+
+Let's look at an example:
+
+```yaml
+# auto scale config
+messenger_auto_scale:
+  pools:
+    default:
+      receivers: '*' # this will match all receivers defined
+
+# messenger config
+framework:
+  messenger:
+    transports:
+      transport1: ''
+      transport2: ''
+      transport3: ''
+```
+
+Every worker in the pool will first process messages in transport1, then once empty, they will look at transport2, and so on. Essentially, we're making a call to the messenger consume command like: `console messenger:consume transport1 transport2 transport3`
+
+If you'd like to be a bit more explicit about receiver priority, then you can define the priority option on your transport which will ensure that receivers with the highest priority will get processed before receivers with lower priority. If two receivers have the same priority, then the order in which they are defined will take precedent.
+
+Let's look at an example:
+
+```yaml
+# auto scale config
+messenger_auto_scale:
+  pools:
+    default:
+      receivers: '*' # this will match all receivers defined
+
+# messenger config
+framework:
+  messenger:
+    transports:
+      transport3:
+        dsn: ''
+        options: { priority: -1 }
+      transport1:
+        dsn: ''
+        options: { priority: 1 }
+      transport2: '' # default priority is 0
+```
+
+This would have the same effect as the above configuration. Even though the transports are defined in a different order, the priority option ensures they are in the same order as above.
+
 ### Disabling Must Match All Receivers
 
 By default, the bundle will throw an exception if any receivers are not matched by the pool config. This is to help prevent any unexpected bugs where you the receiver name is for some reason not matched by a pool when you expected it to.

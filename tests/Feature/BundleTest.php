@@ -33,14 +33,26 @@ final class BundleTest extends BaseBundleTestCase
 
     /** @test */
     public function supervisor_pool_config_is_built_from_sf_configuration() {
-        $this->given_the_kernel_is_booted_with_messenger_and_auto_scale_config();
+        $this->given_the_kernel_is_booted_with_config($this->messengerAndAutoScaleConfig());
         $this->when_the_requires_supervisor_pool_configs_is_created();
-        $this->then_the_pool_configs_match_the_auto_scale_config();
+        $this->then_the_supervisor_pool_configs_match([
+            'sales' => ['sales', 'sales_order'],
+            'default' => ['catalog']
+        ]);
+    }
+
+    /** @test */
+    public function supervisor_pool_config_receiver_ids_are_sorted_off_of_transport_priority_option() {
+        $this->given_the_kernel_is_booted_with_config($this->messengerAndAutoScaleConfigWithPriority());
+        $this->when_the_requires_supervisor_pool_configs_is_created();
+        $this->then_the_supervisor_pool_configs_match([
+            'catalog' => ['catalog_highest', 'catalog_high', 'catalog', 'catalog_low'],
+        ]);
     }
 
     /** @test */
     public function receiver_to_pool_mapping_is_built_from_auto_scale_config() {
-        $this->given_the_kernel_is_booted_with_messenger_and_auto_scale_config();
+        $this->given_the_kernel_is_booted_with_config($this->messengerAndAutoScaleConfig());
         $this->when_the_requires_supervisor_pool_configs_is_created();
         $this->then_the_receiver_to_pools_mapping_matches([
             'catalog' => 'default',
@@ -52,7 +64,7 @@ final class BundleTest extends BaseBundleTestCase
     /** @test */
     public function consuming_messages_with_a_running_supervisor() {
         $this->given_the_message_info_file_is_reset();
-        $this->given_the_kernel_is_booted_with_messenger_and_auto_scale_config();
+        $this->given_the_kernel_is_booted_with_config($this->messengerAndAutoScaleConfig());
         $this->given_the_supervisor_is_started();
         $this->when_the_messages_are_dispatched();
         $this->then_the_message_info_file_matches_the_messages_sent();
@@ -67,13 +79,28 @@ final class BundleTest extends BaseBundleTestCase
         @unlink(__DIR__ . '/Fixtures/_message-info.txt');
     }
 
-    private function given_the_kernel_is_booted_with_messenger_and_auto_scale_config() {
+    private function given_the_kernel_is_booted_with_config(array $configFiles) {
         $kernel = $this->createKernel();
         $kernel->addBundle(Fixtures\TestFixtureBundle::class);
         $kernel->addBundle(MessengerRedisBundle::class);
-        $kernel->addConfigFile(__DIR__ . '/Fixtures/messenger-config.yaml');
-        $kernel->addConfigFile(__DIR__ . '/Fixtures/auto-scale-config.yaml');
+        foreach ($configFiles as $configFile) {
+            $kernel->addConfigFile($configFile);
+        }
         $this->bootKernel();
+    }
+
+    private function messengerAndAutoScaleConfig(): array {
+        return [
+            __DIR__ . '/Fixtures/messenger-config.yaml',
+            __DIR__ . '/Fixtures/auto-scale-config.yaml',
+        ];
+    }
+
+    private function messengerAndAutoScaleConfigWithPriority(): array {
+        return [
+            __DIR__ . '/Fixtures/messenger-config-with-priority.yaml',
+            __DIR__ . '/Fixtures/auto-scale-config-with-priority.yaml',
+        ];
     }
 
     private function given_the_supervisor_is_started() {
@@ -96,12 +123,12 @@ final class BundleTest extends BaseBundleTestCase
         usleep(2000 * 1000); // 2000ms
     }
 
-    private function then_the_pool_configs_match_the_auto_scale_config() {
-        $res = $this->requiresPoolConfigs;
-        $this->assertEquals('sales', $res->poolConfigs[0]->name());
-        $this->assertEquals(['sales', 'sales_order'], $res->poolConfigs[0]->receiverIds());
-        $this->assertEquals('default', $res->poolConfigs[1]->name());
-        $this->assertEquals(['catalog'], $res->poolConfigs[1]->receiverIds());
+    private function then_the_supervisor_pool_configs_match(array $expectedPoolNameToReceiverIds) {
+        $poolNameToReceiverIds = [];
+        foreach ($this->requiresPoolConfigs->poolConfigs as $poolConfig) {
+            $poolNameToReceiverIds[$poolConfig->name()] = $poolConfig->receiverIds();
+        }
+        $this->assertEquals($expectedPoolNameToReceiverIds, $poolNameToReceiverIds);
     }
 
     private function then_the_receiver_to_pools_mapping_matches(array $mapping) {
