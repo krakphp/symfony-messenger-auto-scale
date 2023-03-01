@@ -15,7 +15,7 @@ trait InitsKernel
     }
 
     private function registerPublicServiceCompilerPass() {
-        $this->addCompilerPass(new PublicServicePass('/(Krak.*|krak\..*|messenger.default_serializer|message_bus)/'));
+        $this->addCompilerPass(new PublicServicePass('/(Krak.*|krak\..*|messenger.default_serializer|.*MessageBus.*)/'));
     }
 
     private function given_the_kernel_is_booted_with_config_resources(array $configResources) {

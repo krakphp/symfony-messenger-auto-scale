@@ -15,7 +15,7 @@ final class AutoScaleTest extends TestCase
     private $autoScaleState;
     private $timeSinceLastCall;
 
-    protected function setUp() {
+    protected function setUp(): void {
         $this->poolConfig = new PoolConfig();
     }
 

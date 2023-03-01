@@ -14,7 +14,7 @@ final class MustMatchAllReceiversTest extends BaseBundleTestCase
     private $configs;
 
 
-    protected function setUp() {
+    protected function setUp(): void {
         parent::setUp();
         $this->registerPublicServiceCompilerPass();
     }

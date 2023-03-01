@@ -22,7 +22,12 @@
 
         <!-- Pool Control Factory -->
         <service id="Krak\SymfonyMessengerAutoScale\PoolControl\InMemoryPoolControlFactory"/>
-        <service id="Krak\SymfonyMessengerAutoScale\PoolControl\PsrSimpleCachePoolControlFactory"/>
+        <service id="Krak\SymfonyMessengerAutoScale\PoolControl\PsrSimpleCachePoolControlFactory.simple_cache" class="Symfony\Component\Cache\Psr16Cache">
+            <argument type="service" id="Psr\Cache\CacheItemPoolInterface" />
+        </service>
+        <service id="Krak\SymfonyMessengerAutoScale\PoolControl\PsrSimpleCachePoolControlFactory">
+            <argument type="service" id="Krak\SymfonyMessengerAutoScale\PoolControl\PsrSimpleCachePoolControlFactory.simple_cache"/>
+        </service>
         <service id="Krak\SymfonyMessengerAutoScale\PoolControlFactory" alias="Krak\SymfonyMessengerAutoScale\PoolControl\PsrSimpleCachePoolControlFactory" />
 
         <!-- Raise Alerts -->

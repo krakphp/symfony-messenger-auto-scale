@@ -1,8 +1,4 @@
 framework:
-  serializer:
-    enabled: true
-  cache:
-    default_redis_provider: 'redis://redis:6379'
   messenger:
     transports:
       catalog_low:

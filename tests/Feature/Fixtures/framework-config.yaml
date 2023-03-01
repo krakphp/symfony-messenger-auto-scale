@@ -1,0 +1,7 @@
+framework:
+  serializer:
+    enabled: true
+  cache:
+    app: cache.adapter.redis
+    prefix_seed: test
+    default_redis_provider: 'redis://redis:6379'

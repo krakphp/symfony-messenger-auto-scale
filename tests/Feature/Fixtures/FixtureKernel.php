@@ -30,6 +30,7 @@ final class FixtureKernel extends \Symfony\Component\HttpKernel\Kernel
     }
 
     protected function configureContainer(ContainerBuilder $c, LoaderInterface $loader) {
+        $loader->load(__DIR__ . '/framework-config.yaml');
         $loader->load(__DIR__ . '/messenger-config.yaml');
         $loader->load(__DIR__ . '/auto-scale-config.yaml');
         $loader->load(__DIR__ . '/services.php');

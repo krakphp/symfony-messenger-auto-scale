@@ -9,11 +9,11 @@ abstract class ProcessManagerTestOutline extends TestCase
 {
     abstract public function createProcessManager(): ProcessManager;
 
-    public static function setUpBeforeClass() {
+    public static function setUpBeforeClass(): void {
         @unlink(__DIR__ . '/ProcessManager/Fixtures/run-proc.log');
     }
 
-    public static function tearDownAfterClass() {
+    public static function tearDownAfterClass(): void {
         @unlink(__DIR__ . '/ProcessManager/Fixtures/run-proc.log');
     }
 

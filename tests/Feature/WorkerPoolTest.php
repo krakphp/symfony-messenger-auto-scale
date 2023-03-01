@@ -25,7 +25,7 @@ final class WorkerPoolTest extends TestCase
     /** @var WorkerPool */
     private $workerPool;
 
-    protected function setUp() {
+    protected function setUp(): void {
         $this->getMessageCount = new StaticGetMessageCount();
         $this->procManager = new MockProcessManager();
         $this->testLogger = new TestLogger();

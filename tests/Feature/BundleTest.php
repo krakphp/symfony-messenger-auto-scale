@@ -2,7 +2,11 @@
 
 namespace Krak\SymfonyMessengerAutoScale\Tests\Feature;
 
-use Krak\SymfonyMessengerAutoScale\MessengerAutoScaleBundle;
+use Krak\SymfonyMessengerAutoScale\{
+    AggregatingReceiverMessageCount,
+    MessengerAutoScaleBundle,
+    SupervisorPoolConfig
+};
 use Krak\SymfonyMessengerAutoScale\Tests\Feature\Fixtures\RequiresSupervisorPoolConfigs;
 use Krak\SymfonyMessengerRedis\MessengerRedisBundle;
 use Nyholm\BundleTest\BaseBundleTestCase;
@@ -16,12 +20,12 @@ final class BundleTest extends BaseBundleTestCase
     private $requiresPoolConfigs;
     private $proc;
 
-    protected function setUp() {
+    protected function setUp(): void {
         parent::setUp();
-        $this->addCompilerPass(new PublicServicePass('/(Krak.*|krak\..*|messenger.default_serializer|message_bus)/'));
+        $this->addCompilerPass(new PublicServicePass('/(Krak.*|krak\..*|messenger.default_serializer|messenger.receiver_locator|.*MessageBus.*)/'));
     }
 
-    protected function tearDown() {
+    protected function tearDown(): void {
         if ($this->proc) {
             $this->proc->stop();
         }
@@ -83,6 +87,7 @@ final class BundleTest extends BaseBundleTestCase
         $kernel = $this->createKernel();
         $kernel->addBundle(Fixtures\TestFixtureBundle::class);
         $kernel->addBundle(MessengerRedisBundle::class);
+        $kernel->addConfigFile(__DIR__ . '/Fixtures/framework-config.yaml');
         foreach ($configFiles as $configFile) {
             $kernel->addConfigFile($configFile);
         }
@@ -111,16 +116,38 @@ final class BundleTest extends BaseBundleTestCase
             ->start();
     }
 
+    private function waitUntil(callable $fn, int $usleepDuration = 10000) {
+        $i = 0;
+        while ($i < 1000) {
+            if ($fn()) {
+                return true;
+            }
+            usleep($usleepDuration);
+            $i += 1;
+        }
+
+        return false;
+    }
+
     private function when_the_requires_supervisor_pool_configs_is_created(): void {
         $this->requiresPoolConfigs = $this->getContainer()->get(RequiresSupervisorPoolConfigs::class);
     }
 
     private function when_the_messages_are_dispatched() {
         /** @var MessageBusInterface $bus */
-        $bus = $this->getContainer()->get('message_bus');
+        $bus = $this->getContainer()->get(MessageBusInterface::class);
         $bus->dispatch(new Fixtures\Message\CatalogMessage(1));
         $bus->dispatch(new Fixtures\Message\SalesMessage(2));
-        usleep(2000 * 1000); // 2000ms
+
+        foreach ($this->getMessageCountPools() as [$poolName, $getMessageCount]) {
+            $res = $this->waitUntil(function() use ($getMessageCount) {
+                return $getMessageCount->getMessageCount() === 0;
+            });
+
+            if (!$res) {
+                throw new \RuntimeException('Messages never consumed...');
+            }
+        }
     }
 
     private function then_the_supervisor_pool_configs_match(array $expectedPoolNameToReceiverIds) {
@@ -131,8 +158,21 @@ final class BundleTest extends BaseBundleTestCase
         $this->assertEquals($expectedPoolNameToReceiverIds, $poolNameToReceiverIds);
     }
 
+    private function getMessageCountPools(): iterable {
+        foreach ($this->requiresSupervisorPoolConfigs()->poolConfigs as $poolConfig) {
+            yield [$poolConfig->name(), AggregatingReceiverMessageCount::createFromReceiverIds(
+                $poolConfig->receiverIds(),
+                $this->getContainer()->get('messenger.receiver_locator')
+            )];
+        }
+    }
+
     private function then_the_receiver_to_pools_mapping_matches(array $mapping) {
         $this->assertEquals($mapping, $this->requiresPoolConfigs->receiverToPoolMapping);
+    }
+
+    private function requiresSupervisorPoolConfigs(): RequiresSupervisorPoolConfigs {
+        return $this->getContainer()->get(RequiresSupervisorPoolConfigs::class);
     }
 
     private function then_the_message_info_file_matches_the_messages_sent() {
