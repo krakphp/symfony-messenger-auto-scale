@@ -39,7 +39,7 @@ messenger_auto_scale:
       max_procs: 5
       backed_up_alert_threshold: 100
       receivers: "*"
-      heartbeat_interval: 10      
+      heartbeat_interval: 10
 ```
 
 Once configured, you can start the consumer with the `krak:auto-scale:consume` command which will start up and manage the worker pools.
@@ -111,6 +111,21 @@ messenger_auto_scale:
   must_match_all_receivers: false
 ```
 
+### Custom Worker Command and Options
+
+By default, each worker process starts the default symfony `messenger:consume` command and passes in the receiver ids. You can configure the command to run and any additional options with it.
+
+```yaml
+messenger_auto_scale:
+  pools:
+    default:
+      # ...
+      worker_command: 'messenger:consume'
+      worker_command_options: ['--memory-limit=64M']
+```
+
+You can find all of the available options in symfony's worker in the [ConsumeMessagesCommand class](https://github.com/symfony/symfony/blob/5.4/src/Symfony/Component/Messenger/Command/ConsumeMessagesCommand.php#L69).
+
 ## Configuring Heartbeats
 
 By default, each worker pool will log a heartbeat event every 60 seconds. If you want to change the frequency of that, you use the pool `heartbeat_interval` to define the number of seconds between subsequent heartbeats.
@@ -121,7 +136,7 @@ You can access the PoolControl from your own services if you want to build out c
 
 ## Auto Scaling
 
-Auto scaling is managed with the AutoScale interface which is responsible for taking the current state of a worker pool captured in the `AutoScaleRequest` and returning the expected num workers for that worker pool captured in `AutoScaleResponse`. 
+Auto scaling is managed with the AutoScale interface which is responsible for taking the current state of a worker pool captured in the `AutoScaleRequest` and returning the expected num workers for that worker pool captured in `AutoScaleResponse`.
 
 The default auto scale is setup to work off of the current queue size and the configured message rate and then will clip to the min/max procs configured. There also is some logic included to debounce the auto scaling requests to ensure that the system is judicious about when to create new procs and isn't fluctuating too often.
 
