@@ -25,7 +25,7 @@ final class EventLogger extends AbstractLogger
         ]);
     }
 
-    public function log($level, $message, array $context = array()) {
+    public function log($level, string|\Stringable $message, array $context = []): void {
         $this->logger->log($level, $message, $context);
     }
 }
